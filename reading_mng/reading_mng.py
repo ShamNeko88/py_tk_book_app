@@ -113,7 +113,6 @@ class MainWindow(tk.Frame):
     def update(self):
         # リストが選択されている場合にサブウィンドウを表示
         if self.id != -1:
-            print(f"update id={self.id}")
             sub_window = SubWindow(self, "update")
 
     def delete(self):
@@ -122,7 +121,9 @@ class MainWindow(tk.Frame):
             ret = messagebox.askyesno("削除確認", "削除していいですか？")
             if ret:
                 # 「はい」が押されていたら削除
-                print(f"delete id = {self.id}")
+                self.book.delete(self.db, self.id)
+                # リストを再描画
+                self.display_list()
 
     def select_record(self, e):
         # 選択行の取得
@@ -171,6 +172,8 @@ class SubWindow:
         self.master = master
         self.mode = mode
         self.db = master.db
+        self.id = master.id
+        self.book = master.book
 
         # サブウィンドウの描画
         self.sub_window = tk.Toplevel()
@@ -180,11 +183,20 @@ class SubWindow:
         if mode == "add":
             self.book_info = Book()
         else:
-            pass
-
+            self.book_info = self.book.select(self.db, self.id)
         # 全ウィジェットの配置
         self.set_widget()
+
+        # ウィンドウを閉じられた時に処理を実行
+        self.sub_window.protocol("WM_DELETE_WINDOW", self.close_window)
     
+    def close_window(self):
+        # リストの再描画
+        self.master.display_list()
+
+        # サブウィンドウを閉じる
+        self.sub_window.destroy()
+
     def set_widget(self):
         # ********* 1行目 *********
         # 書籍名ラベル
@@ -195,6 +207,7 @@ class SubWindow:
         text_book_title = ttk.Entry(self.sub_window, width=50)
         text_book_title.grid(row=0, column=1, columnspan=2, sticky=tk.W)
         text_book_title.config(textvariable=self.str_book_title)
+        self.str_book_title.set(self.book_info.name)
         # 著者ラベル
         label_author = ttk.Label(self.sub_window, text="業者：")
         label_author.grid(row=0, column=3, padx=5, pady=5, sticky=tk.E)
@@ -203,6 +216,7 @@ class SubWindow:
         text_author = ttk.Entry(self.sub_window, width=20)
         text_author.grid(row=0, column=4, columnspan=2, sticky=tk.W)
         text_author.config(textvariable=self.str_auther)
+        self.str_auther.set(self.book_info.auther)
 
         # ********* 2行目 ********
         # 評価ラベル
@@ -213,6 +227,7 @@ class SubWindow:
         combo_evaluation = ttk.Combobox(self.sub_window, values=EVALUATION_VALUE, state="readonly")
         combo_evaluation.grid(row=1, column=1, columnspan=2, sticky=tk.W)
         combo_evaluation.config(textvariable=self.str_evaluation)
+        self.str_evaluation.set(self.book_info.evaluation)
 
         # ステータスラベル
         label_status = ttk.Label(self.sub_window, text="ステータス：")
@@ -222,6 +237,7 @@ class SubWindow:
         combo_status = ttk.Combobox(self.sub_window, values=STATUS_VALUE, state="readonly")
         combo_status.grid(row=1, column=4, columnspan=2, sticky=tk.W)
         combo_status.config(textvariable=self.str_status)
+        combo_status.set(self.book_info.status)
 
         # ********** 3行目 *********
         # 購入日ラベル
@@ -232,9 +248,11 @@ class SubWindow:
         self.date_purchase = DateEntry(self.sub_window, showweekbumber=False)
         self.date_purchase.grid(row=2, column=1, sticky=tk.W)
         self.date_purchase.config(textvariable=self.str_purchase_date)
+        self.str_purchase_date.set(self.book_info.purchase_date)
         # 購入日クリアボタン
         btn_clear_purchase = ttk.Button(self.sub_window, text="<-Clear")
         btn_clear_purchase.grid(row=2, column=2, sticky=tk.W)
+        btn_clear_purchase.config(command=lambda:self.date_purchase.delete(0, "end"))
         # 開始日ラベル
         label_start_date = ttk.Label(self.sub_window, text="開始日：")
         label_start_date.grid(row=2, column=3, padx=5, sticky=tk.E)
@@ -243,9 +261,11 @@ class SubWindow:
         self.date_start = DateEntry(self.sub_window, showweeknumbers=False)
         self.date_start.grid(row=2, column=4, sticky=tk.W)
         self.date_start.config(textvariable=self.str_start_date)
+        self.str_start_date.set(self.book_info.start_date)
         # 開始日クリアボタン
         btn_clear_start = ttk.Button(self.sub_window, text="<-Clear")
         btn_clear_start.grid(row=2, column=5, sticky=tk.W)
+        btn_clear_start.config(command=lambda:self.date_start.delete(0, "end"))
         
         # ********** 4行目 ********
         # 読了日ラベル
@@ -256,9 +276,11 @@ class SubWindow:
         self.date_end = DateEntry(self.sub_window, showweeknumbers=False)
         self.date_end.grid(row=3, column=1, sticky=tk.W)
         self.date_end.config(textvariable=self.str_end_date)
+        self.str_end_date.set(self.book_info.end_date)
         # 読了日クリアボタン
         btn_clear_end = ttk.Button(self.sub_window, text="<-Clear")
         btn_clear_end.grid(row=3, column=2, sticky=tk.W)
+        btn_clear_end.config(command=lambda:self.date_end.delete(0, "end"))
         # 総ページ数ラベル
         label_total_page = ttk.Label(self.sub_window, text="総ページ数：")
         label_total_page.grid(row=3, column=3, padx=5, sticky=tk.E)
@@ -267,6 +289,7 @@ class SubWindow:
         text_total_page = ttk.Entry(self.sub_window, width=10)
         text_total_page.grid(row=3, column=4, columnspan=2, sticky=tk.W)
         text_total_page.config(textvariable=self.str_pages)
+        self.str_pages.set(self.book_info.pages)
 
         # ********** 5行目 ********
         # URLラベル
@@ -277,6 +300,7 @@ class SubWindow:
         text_url = ttk.Entry(self.sub_window, width=100)
         text_url.grid(row=4, column=1, columnspan=5, sticky=tk.W)
         text_url.config(textvariable=self.str_url)
+        self.str_url.set(self.book_info.url)
 
         # ********** 6行目 *********
         # コメントラベル
@@ -288,12 +312,13 @@ class SubWindow:
         # コメント入力欄
         self.text_comment = tk.Text(frame, width=100, height=5)
         self.text_comment.pack(side=tk.LEFT)
+        self.text_comment.insert(tk.END, self.book_info.comment)
         # 縦スクロールバー
         vscrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL)
         vscrollbar.pack(side=tk.LEFT, fill=tk.Y)
         vscrollbar.config(command=self.text_comment.yview)
         self.text_comment.config(yscrollcommand=vscrollbar.set)
-
+        
         # ********* 7行目 **********
         if self.mode == "add":
             btn_add = ttk.Button(self.sub_window, text="追加")
@@ -302,6 +327,7 @@ class SubWindow:
         else:
             btn_update = ttk.Button(self.sub_window, text="更新")
             btn_update.grid(row=6, column=4, padx=5, pady=5, sticky=tk.E)
+            btn_update.config(command=self.update)
 
     # サブウィンドウでの入力値の受け取り        
     def get_input_data(self):
@@ -336,6 +362,26 @@ class SubWindow:
 
         # サブウィンドウを閉じる
         self.sub_window.destroy()
+    
+    def update(self):
+        # 入力値の取り出し
+        self.get_input_data()
+        # 簡単な入力チェック
+        if len(self.book_info.name.strip()) == 0:
+            messagebox.showerror("エラー", "書籍名が空白です。")
+            return
+        elif self.book_info.pages.isdigit() == False:
+            messagebox.showerror("エラー", "ページ数が数字ではありません。")
+            return
+        # update実行
+        self.book_info.update(self.db)
+
+        # リストの再描画
+        self.master.display_list()
+
+        # サブウィンドウを閉じる
+        self.sub_window.destroy()
+
 """
 Bookテーブルクラス
 """
