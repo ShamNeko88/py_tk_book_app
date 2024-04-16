@@ -170,11 +170,17 @@ class SubWindow:
         # パラメータの受け取り
         self.master = master
         self.mode = mode
+        self.db = master.db
 
         # サブウィンドウの描画
         self.sub_window = tk.Toplevel()
         self.sub_window.title("Description")
         self.sub_window.grab_set()
+
+        if mode == "add":
+            self.book_info = Book()
+        else:
+            pass
 
         # 全ウィジェットの配置
         self.set_widget()
@@ -185,36 +191,47 @@ class SubWindow:
         label_book_title = ttk.Label(self.sub_window, text="書籍名：")
         label_book_title.grid(row=0, column=0, padx=5, pady=5, sticky=tk.E)
         # 書籍名入力欄
+        self.str_book_title = tk.StringVar()
         text_book_title = ttk.Entry(self.sub_window, width=50)
         text_book_title.grid(row=0, column=1, columnspan=2, sticky=tk.W)
+        text_book_title.config(textvariable=self.str_book_title)
         # 著者ラベル
         label_author = ttk.Label(self.sub_window, text="業者：")
         label_author.grid(row=0, column=3, padx=5, pady=5, sticky=tk.E)
         # 著者入力欄
+        self.str_auther = tk.StringVar()
         text_author = ttk.Entry(self.sub_window, width=20)
         text_author.grid(row=0, column=4, columnspan=2, sticky=tk.W)
+        text_author.config(textvariable=self.str_auther)
 
         # ********* 2行目 ********
         # 評価ラベル
         label_evaluation = ttk.Label(self.sub_window, text="評価：")
         label_evaluation.grid(row=1, column=0, padx=5, pady=5, sticky=tk.E)
         # 評価ドロップダウンリスト
+        self.str_evaluation = tk.StringVar()
         combo_evaluation = ttk.Combobox(self.sub_window, values=EVALUATION_VALUE, state="readonly")
         combo_evaluation.grid(row=1, column=1, columnspan=2, sticky=tk.W)
+        combo_evaluation.config(textvariable=self.str_evaluation)
+
         # ステータスラベル
         label_status = ttk.Label(self.sub_window, text="ステータス：")
         label_status.grid(row=1, column=3, padx=5, pady=5, sticky=tk.E)
         # ステータスドロップダウンリスト
+        self.str_status = tk.StringVar()
         combo_status = ttk.Combobox(self.sub_window, values=STATUS_VALUE, state="readonly")
         combo_status.grid(row=1, column=4, columnspan=2, sticky=tk.W)
+        combo_status.config(textvariable=self.str_status)
 
         # ********** 3行目 *********
         # 購入日ラベル
         label_purchase_date = ttk.Label(self.sub_window, text="購入日：")
         label_purchase_date.grid(row=2, column=0, padx=5, pady=5, sticky=tk.E)
         # 購入日カレンダー
+        self.str_purchase_date = tk.StringVar()
         self.date_purchase = DateEntry(self.sub_window, showweekbumber=False)
         self.date_purchase.grid(row=2, column=1, sticky=tk.W)
+        self.date_purchase.config(textvariable=self.str_purchase_date)
         # 購入日クリアボタン
         btn_clear_purchase = ttk.Button(self.sub_window, text="<-Clear")
         btn_clear_purchase.grid(row=2, column=2, sticky=tk.W)
@@ -222,8 +239,10 @@ class SubWindow:
         label_start_date = ttk.Label(self.sub_window, text="開始日：")
         label_start_date.grid(row=2, column=3, padx=5, sticky=tk.E)
         # 開始日カレンダ
+        self.str_start_date = tk.StringVar()
         self.date_start = DateEntry(self.sub_window, showweeknumbers=False)
         self.date_start.grid(row=2, column=4, sticky=tk.W)
+        self.date_start.config(textvariable=self.str_start_date)
         # 開始日クリアボタン
         btn_clear_start = ttk.Button(self.sub_window, text="<-Clear")
         btn_clear_start.grid(row=2, column=5, sticky=tk.W)
@@ -233,8 +252,10 @@ class SubWindow:
         label_finish_date = ttk.Label(self.sub_window, text="読了日：")
         label_finish_date.grid(row=3, column=0, padx=5, pady=5, sticky=tk.E)
         # 読了日カレンダ
+        self.str_end_date = tk.StringVar()
         self.date_end = DateEntry(self.sub_window, showweeknumbers=False)
         self.date_end.grid(row=3, column=1, sticky=tk.W)
+        self.date_end.config(textvariable=self.str_end_date)
         # 読了日クリアボタン
         btn_clear_end = ttk.Button(self.sub_window, text="<-Clear")
         btn_clear_end.grid(row=3, column=2, sticky=tk.W)
@@ -242,16 +263,20 @@ class SubWindow:
         label_total_page = ttk.Label(self.sub_window, text="総ページ数：")
         label_total_page.grid(row=3, column=3, padx=5, sticky=tk.E)
         # 総ページ数入力欄
+        self.str_pages = tk.StringVar()
         text_total_page = ttk.Entry(self.sub_window, width=10)
         text_total_page.grid(row=3, column=4, columnspan=2, sticky=tk.W)
+        text_total_page.config(textvariable=self.str_pages)
 
         # ********** 5行目 ********
         # URLラベル
         label_url = ttk.Label(self.sub_window, text="URL:")
         label_url.grid(row=4, column=0, padx=5, pady=5, sticky=tk.E)
         # URL入力欄
+        self.str_url = tk.StringVar()
         text_url = ttk.Entry(self.sub_window, width=100)
         text_url.grid(row=4, column=1, columnspan=5, sticky=tk.W)
+        text_url.config(textvariable=self.str_url)
 
         # ********** 6行目 *********
         # コメントラベル
@@ -273,10 +298,44 @@ class SubWindow:
         if self.mode == "add":
             btn_add = ttk.Button(self.sub_window, text="追加")
             btn_add.grid(row=6, column=1, padx=5, pady=5, sticky=tk.E)
+            btn_add.config(command=self.add)
         else:
             btn_update = ttk.Button(self.sub_window, text="更新")
             btn_update.grid(row=6, column=4, padx=5, pady=5, sticky=tk.E)
 
+    # サブウィンドウでの入力値の受け取り        
+    def get_input_data(self):
+        self.book_info.name = self.str_book_title.get()
+        self.book_info.auther = self.str_auther.get()
+        self.book_info.evaluation = self.str_evaluation.get()
+        self.book_info.status = self.str_status.get()
+        self.book_info.purchase_date = self.str_purchase_date.get()
+        self.book_info.start_date = self.str_start_date.get()
+        self.book_info.end_date = self.str_end_date.get()
+        self.book_info.pages = self.str_pages.get()
+        self.book_info.url = self.str_url.get()
+        self.book_info.comment = self.text_comment.get("1.0", "end")
+    
+    def add(self):
+        # 入力値の取り出し
+        self.get_input_data()
+        
+        # 簡単な入力チェック
+        if len(self.book_info.name.strip()) == 0:
+            messagebox.showerror("エラー", "書籍名が空白です")
+            return
+        elif self.book_info.pages.isdigit() == False:
+            messagebox.showerror("エラー", "ページ数が数字ではありません。")
+            return
+        
+        # インサート実行
+        self.book_info.insert(self.db)
+        
+        # リストの再描画
+        self.master.display_list()
+
+        # サブウィンドウを閉じる
+        self.sub_window.destroy()
 """
 Bookテーブルクラス
 """
